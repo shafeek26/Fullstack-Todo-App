@@ -6,7 +6,7 @@ const asynHandler = require("express-async-handler");
 require("dotenv").config();
 
 //@desc sigup user
-//@route POST /api/auth
+//@route POST /api/auth/signup
 const userSignup = asynHandler(async (req, res) => {
   const { name, email, password } = req.body;
 
@@ -21,7 +21,7 @@ const userSignup = asynHandler(async (req, res) => {
   if (existingUser) {
     res
       .status(400)
-      .json({ message: "This email is already registerd with us" });
+      throw new Error("This email is already registerd with us")
   }
   // hashing password and storing in database
   const encryptedPassword = await bycrypt.hash(password, 10);
@@ -42,12 +42,13 @@ const userSignup = asynHandler(async (req, res) => {
       token : getToken(user._id)
     });
   } else {
-    res.status(400).json({ message: "Inavalid user data" });
+    res.status(400)
+    throw new Error("Inavalid user data")
   }
 });
 
 //@desc login user
-//@route POST /api/auth
+//@route POST /api/auth/login
 const userLogin = asynHandler(async (req, res) => {
   const { email, password } = req.body;
 
@@ -68,14 +69,16 @@ const userLogin = asynHandler(async (req, res) => {
       token : getToken(user._id)
     });
   } else {
-    res.status(400).json({ message: "Invalid Credentials" });
+    res.status(400)
+    throw new Error("Invalid Credentials")
   }
 });
 
-
-const getUser = (req, res) => {
+//@desc getUser user data
+//@route POST /api/auth/me
+const getUser = asynHandler( async (req, res) => {
   res.status(200).json({message : 'user Data'})
-}
+})
 
 
 // token generation
