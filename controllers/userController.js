@@ -1,10 +1,8 @@
-/** @format */
 
-const User = require("../model/userSchema");
+const User = require("../model/userModel");
 const bycrypt = require("bcryptjs");
 const JWT = require("jsonwebtoken");
 const asynHandler = require("express-async-handler");
-const { use } = require("../routes/todoRoute");
 require("dotenv").config();
 
 //@desc sigup user
@@ -14,7 +12,8 @@ const userSignup = asynHandler(async (req, res) => {
 
   // checking user enterd details
   if (!(name && email && password)) {
-    res.status(400).json({ message: "All fields are required" });
+    res.status(400)
+    throw new Error('All fields are required')
   }
 
   //validating user already exists
@@ -35,15 +34,16 @@ const userSignup = asynHandler(async (req, res) => {
     password: encryptedPassword,
   });
 
-  // generating token
-
-  const token = JWT.sign({ _id: user._id }, process.env.JWT_SECRETE, {
-    expiresIn: process.env.TOKEN_EXPIRY,
-  });
-
-  user.token = token;
-  res.status(200).json({ user, token });
-  console.log(token);
+  if (user) {
+    res.status(200).json({
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      token : getToken(user._id)
+    });
+  } else {
+    res.status(400).json({ message: "Inavalid user data" });
+  }
 });
 
 //@desc login user
@@ -53,30 +53,45 @@ const userLogin = asynHandler(async (req, res) => {
 
   //checking user entered details
   if (!(email && password)) {
-    res.status(400).json({ message: "Email and Password is required" });
+    res.status(400)
+    throw new Error('Email and Password is required')
   }
 
   // validating user and comparing email and password
   const user = await User.findOne({ email });
 
-  //if user not found
-  if (!user) {
-    res.status(400).json({ message: "user not exists" });
-  }
-
   if (user && (await bycrypt.compare(password, user.password))) {
-    const token = JWT.sign({ _id: user._id }, process.env.JWT_SECRETE, {
-      expiresIn: process.env.TOKEN_EXPIRY,
+    res.status(200).json({
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      token : getToken(user._id)
     });
-    user.token = token;
-
-    res.status(200).json(user);
   } else {
-    res.status(401).json({ message: "Invalid Credentials" });
+    res.status(400).json({ message: "Invalid Credentials" });
   }
 });
+
+
+const getUser = (req, res) => {
+  res.status(200).json({message : 'user Data'})
+}
+
+
+// token generation
+
+const getToken = (id) => {
+  return JWT.sign(
+    {id},
+    process.env.JWT_SECRETE,
+    {
+      expiresIn : process.env.TOKEN_EXPIRY
+    }
+  )
+}
 
 module.exports = {
   userSignup,
   userLogin,
+  getUser
 };
