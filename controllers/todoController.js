@@ -1,6 +1,6 @@
 /** @format */
 
-const Todo = require("../model/todoModel");
+const Todo = require("../model/todoSchema");
 const asyncHandler = require("express-async-handler");
 
 // @desc fetching todo
