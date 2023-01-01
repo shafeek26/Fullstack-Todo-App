@@ -1,4 +1,3 @@
-/** @format */
 
 const Todo = require("../model/todoModel");
 const asyncHandler = require("express-async-handler");
